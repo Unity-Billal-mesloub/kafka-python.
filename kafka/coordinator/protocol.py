@@ -1,18 +1,16 @@
-from __future__ import absolute_import
-
 from kafka.protocol.struct import Struct
 from kafka.protocol.types import Array, Bytes, Int16, Int32, Schema, String
 from kafka.structs import TopicPartition
 
 
-class ConsumerProtocolMemberMetadata(Struct):
+class ConsumerProtocolMemberMetadata_v0(Struct):
     SCHEMA = Schema(
         ('version', Int16),
-        ('subscription', Array(String('utf-8'))),
+        ('topics', Array(String('utf-8'))),
         ('user_data', Bytes))
 
 
-class ConsumerProtocolMemberAssignment(Struct):
+class ConsumerProtocolMemberAssignment_v0(Struct):
     SCHEMA = Schema(
         ('version', Int16),
         ('assignment', Array(
@@ -26,8 +24,10 @@ class ConsumerProtocolMemberAssignment(Struct):
                 for partition in partitions]
 
 
-class ConsumerProtocol(object):
+class ConsumerProtocol_v0(object):
     PROTOCOL_TYPE = 'consumer'
-    ASSIGNMENT_STRATEGIES = ('range', 'roundrobin')
-    METADATA = ConsumerProtocolMemberMetadata
-    ASSIGNMENT = ConsumerProtocolMemberAssignment
+    METADATA = ConsumerProtocolMemberMetadata_v0
+    ASSIGNMENT = ConsumerProtocolMemberAssignment_v0
+
+
+ConsumerProtocol = [ConsumerProtocol_v0]

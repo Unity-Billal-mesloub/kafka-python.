@@ -1,10 +1,13 @@
-from __future__ import absolute_import
 import abc
 
 
-class ABCRecord(object):
-    __metaclass__ = abc.ABCMeta
+class ABCRecord(object, metaclass=abc.ABCMeta):
     __slots__ = ()
+
+    @abc.abstractproperty
+    def size_in_bytes(self):
+        """ Number of total bytes in record
+        """
 
     @abc.abstractproperty
     def offset(self):
@@ -37,6 +40,11 @@ class ABCRecord(object):
             be the checksum for v0 and v1 and None for v2 and above.
         """
 
+    @abc.abstractmethod
+    def validate_crc(self):
+        """ Return True if v0/v1 record matches checksum. noop/True for v2 records
+        """
+
     @abc.abstractproperty
     def headers(self):
         """ If supported by version list of key-value tuples, or empty list if
@@ -44,8 +52,7 @@ class ABCRecord(object):
         """
 
 
-class ABCRecordBatchBuilder(object):
-    __metaclass__ = abc.ABCMeta
+class ABCRecordBatchBuilder(object, metaclass=abc.ABCMeta):
     __slots__ = ()
 
     @abc.abstractmethod
@@ -84,11 +91,10 @@ class ABCRecordBatchBuilder(object):
         """
 
 
-class ABCRecordBatch(object):
-    """ For v2 incapsulates a RecordBatch, for v0/v1 a single (maybe
+class ABCRecordBatch(object, metaclass=abc.ABCMeta):
+    """ For v2 encapsulates a RecordBatch, for v0/v1 a single (maybe
         compressed) message.
     """
-    __metaclass__ = abc.ABCMeta
     __slots__ = ()
 
     @abc.abstractmethod
@@ -97,9 +103,23 @@ class ABCRecordBatch(object):
             if needed.
         """
 
+    @abc.abstractproperty
+    def base_offset(self):
+        """ Return base offset for batch
+        """
 
-class ABCRecords(object):
-    __metaclass__ = abc.ABCMeta
+    @abc.abstractproperty
+    def size_in_bytes(self):
+        """ Return size of batch in bytes (includes header overhead)
+        """
+
+    @abc.abstractproperty
+    def magic(self):
+        """ Return magic value (0, 1, 2) for batch.
+        """
+
+
+class ABCRecords(object, metaclass=abc.ABCMeta):
     __slots__ = ()
 
     @abc.abstractmethod

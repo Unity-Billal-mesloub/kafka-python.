@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-
 from kafka.metrics.stats.sampled_stat import AbstractSampledStat
 
 
 class Max(AbstractSampledStat):
     """An AbstractSampledStat that gives the max over its samples."""
+    __slots__ = ('_initial_value', '_samples', '_current')
+
     def __init__(self):
         super(Max, self).__init__(float('-inf'))
 

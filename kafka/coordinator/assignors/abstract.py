@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import abc
 import logging
 
@@ -23,8 +21,9 @@ class AbstractPartitionAssignor(object):
 
         Arguments:
             cluster (ClusterMetadata): metadata for use in assignment
-            members (dict of {member_id: MemberMetadata}): decoded metadata for
-                each member in the group.
+            members (dict of {member_id: Subscription}): decoded metadata
+                for each member in the group, including group_instance_id
+                when available.
 
         Returns:
             dict: {member_id: MemberAssignment}

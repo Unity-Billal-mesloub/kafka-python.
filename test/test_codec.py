@@ -1,10 +1,7 @@
-from __future__ import absolute_import
-
 import platform
 import struct
 
 import pytest
-from kafka.vendor.six.moves import range
 
 from kafka.codec import (
     has_snappy, has_lz4, has_zstd,
@@ -39,12 +36,14 @@ def test_snappy_detect_xerial():
     _detect_xerial_stream = kafka1.codec._detect_xerial_stream
 
     header = b'\x82SNAPPY\x00\x00\x00\x00\x01\x00\x00\x00\x01Some extra bytes'
+    redpanda_header = b'\x82SNAPPY\x00\x01\x00\x00\x00\x01\x00\x00\x00Some extra bytes'
     false_header = b'\x01SNAPPY\x00\x00\x00\x01\x00\x00\x00\x01'
     default_snappy = snappy_encode(b'foobar' * 50)
     random_snappy = snappy_encode(b'SNAPPY' * 50, xerial_compatible=False)
     short_data = b'\x01\x02\x03\x04'
 
     assert _detect_xerial_stream(header) is True
+    assert _detect_xerial_stream(redpanda_header) is True
     assert _detect_xerial_stream(b'') is False
     assert _detect_xerial_stream(b'\x00') is False
     assert _detect_xerial_stream(false_header) is False

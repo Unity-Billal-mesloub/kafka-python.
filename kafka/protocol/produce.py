@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from kafka.protocol.api import Request, Response
 from kafka.protocol.types import Int16, Int32, Int64, String, Array, Schema, Bytes
 
@@ -47,6 +45,7 @@ class ProduceResponse_v2(Response):
 
 
 class ProduceResponse_v3(Response):
+    # Adds support for message format v2
     API_KEY = 0
     API_VERSION = 3
     SCHEMA = ProduceResponse_v2.SCHEMA
@@ -111,12 +110,12 @@ class ProduceResponse_v8(Response):
                 ('error_code', Int16),
                 ('offset', Int64),
                 ('timestamp', Int64),
-                ('log_start_offset', Int64)),
+                ('log_start_offset', Int64),
                 ('record_errors', (Array(
                     ('batch_index', Int32),
                     ('batch_index_error_message', String('utf-8'))
                  ))),
-                ('error_message', String('utf-8'))
+                ('error_message', String('utf-8')))
              ))),
         ('throttle_time_ms', Int32)
     )
@@ -141,7 +140,7 @@ class ProduceRequest_v0(ProduceRequest):
             ('topic', String('utf-8')),
             ('partitions', Array(
                 ('partition', Int32),
-                ('messages', Bytes)))))
+                ('records', Bytes)))))
     )
 
 
@@ -158,6 +157,7 @@ class ProduceRequest_v2(ProduceRequest):
 
 
 class ProduceRequest_v3(ProduceRequest):
+    # Adds support for message format v2
     API_VERSION = 3
     RESPONSE_TYPE = ProduceResponse_v3
     SCHEMA = Schema(
@@ -168,7 +168,7 @@ class ProduceRequest_v3(ProduceRequest):
             ('topic', String('utf-8')),
             ('partitions', Array(
                 ('partition', Int32),
-                ('messages', Bytes)))))
+                ('records', Bytes)))))
     )
 
 

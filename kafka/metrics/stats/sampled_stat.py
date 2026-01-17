@@ -1,11 +1,9 @@
-from __future__ import absolute_import
-
 import abc
 
 from kafka.metrics.measurable_stat import AbstractMeasurableStat
 
 
-class AbstractSampledStat(AbstractMeasurableStat):
+class AbstractSampledStat(AbstractMeasurableStat, metaclass=abc.ABCMeta):
     """
     An AbstractSampledStat records a single scalar value measured over
     one or more samples. Each sample is recorded over a configurable
@@ -20,7 +18,7 @@ class AbstractSampledStat(AbstractMeasurableStat):
     Subclasses of this class define different statistics measured
     using this basic pattern.
     """
-    __metaclass__ = abc.ABCMeta
+    __slots__ = ('_initial_value', '_samples', '_current')
 
     def __init__(self, initial_value):
         self._initial_value = initial_value

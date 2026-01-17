@@ -1,7 +1,6 @@
-from __future__ import absolute_import
-
 import struct
 from struct import error
+import uuid
 
 from kafka.protocol.abstract import AbstractType
 
@@ -88,6 +87,20 @@ class Float64(AbstractType):
     @classmethod
     def decode(cls, data):
         return _unpack(cls._unpack, data.read(8))
+
+
+class UUID(AbstractType):
+    ZERO_UUID = uuid.UUID(int=0)
+
+    @classmethod
+    def encode(cls, value):
+        if isinstance(value, uuid.UUID):
+            return value.bytes
+        return uuid.UUID(value).bytes
+
+    @classmethod
+    def decode(cls, data):
+        return uuid.UUID(bytes=data.read(16))
 
 
 class String(AbstractType):
@@ -215,6 +228,17 @@ class Array(AbstractType):
 class UnsignedVarInt32(AbstractType):
     @classmethod
     def decode(cls, data):
+        value = VarInt32.decode(data)
+        return (value << 1) ^ (value >> 31)
+
+    @classmethod
+    def encode(cls, value):
+        return VarInt32.encode((value >> 1) ^ -(value & 1))
+
+
+class VarInt32(AbstractType):
+    @classmethod
+    def decode(cls, data):
         value, i = 0, 0
         while True:
             b, = struct.unpack('B', data.read(1))
@@ -225,10 +249,12 @@ class UnsignedVarInt32(AbstractType):
             if i > 28:
                 raise ValueError('Invalid value {}'.format(value))
         value |= b << i
-        return value
+        return (value >> 1) ^ -(value & 1)
 
     @classmethod
     def encode(cls, value):
+        # bring it in line with the java binary repr
+        value = (value << 1) ^ (value >> 31)
         value &= 0xffffffff
         ret = b''
         while (value & 0xffffff80) != 0:
@@ -239,25 +265,12 @@ class UnsignedVarInt32(AbstractType):
         return ret
 
 
-class VarInt32(AbstractType):
-    @classmethod
-    def decode(cls, data):
-        value = UnsignedVarInt32.decode(data)
-        return (value >> 1) ^ -(value & 1)
-
-    @classmethod
-    def encode(cls, value):
-        # bring it in line with the java binary repr
-        value &= 0xffffffff
-        return UnsignedVarInt32.encode((value << 1) ^ (value >> 31))
-
-
 class VarInt64(AbstractType):
     @classmethod
     def decode(cls, data):
         value, i = 0, 0
         while True:
-            b = data.read(1)
+            b, = struct.unpack('B', data.read(1))
             if not (b & 0x80):
                 break
             value |= (b & 0x7f) << i
@@ -270,14 +283,14 @@ class VarInt64(AbstractType):
     @classmethod
     def encode(cls, value):
         # bring it in line with the java binary repr
+        value = (value << 1) ^ (value >> 63)
         value &= 0xffffffffffffffff
-        v = (value << 1) ^ (value >> 63)
         ret = b''
-        while (v & 0xffffffffffffff80) != 0:
+        while (value & 0xffffffffffffff80) != 0:
             b = (value & 0x7f) | 0x80
             ret += struct.pack('B', b)
-            v >>= 7
-        ret += struct.pack('B', v)
+            value >>= 7
+        ret += struct.pack('B', value)
         return ret
 
 
@@ -348,7 +361,6 @@ class CompactBytes(AbstractType):
 
 
 class CompactArray(Array):
-
     def encode(self, items):
         if items is None:
             return UnsignedVarInt32.encode(0)
@@ -363,3 +375,34 @@ class CompactArray(Array):
             return None
         return [self.array_of.decode(data) for _ in range(length)]
 
+
+class BitField(AbstractType):
+    @classmethod
+    def decode(cls, data):
+        return cls.from_32_bit_field(Int32.decode(data))
+
+    @classmethod
+    def encode(cls, vals):
+        # to_32_bit_field returns unsigned val, so we need to
+        # encode >I to avoid crash if/when byte 31 is set
+        # (note that decode as signed still works fine)
+        return struct.Struct('>I').pack(cls.to_32_bit_field(vals))
+
+    @classmethod
+    def to_32_bit_field(cls, vals):
+        value = 0
+        for b in vals:
+            assert 0 <= b < 32
+            value |= 1 << b
+        return value
+
+    @classmethod
+    def from_32_bit_field(cls, value):
+        result = set()
+        count = 0
+        while value != 0:
+            if (value & 1) != 0:
+                result.add(count)
+            count += 1
+            value = (value & 0xFFFFFFFF) >> 1
+        return result

@@ -7,6 +7,7 @@ MANIFEST
 env
 servers/*/kafka-bin*
 servers/*/resources/ssl*
+servers/*/messages/*
 .coverage*
 .noseids
 docs/_build
@@ -15,3 +16,8 @@ docs/_build
 integration-test/
 tests-env/
 .pytest_cache/
+.envrc
+shell.nix
+.venv*/
+.direnv/
+.scratch/

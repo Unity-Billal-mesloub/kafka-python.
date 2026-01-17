@@ -1,12 +1,8 @@
-from __future__ import absolute_import
-
 import gzip
 import io
 import platform
 import struct
 
-from kafka.vendor import six
-from kafka.vendor.six.moves import range
 
 _XERIAL_V1_HEADER = (-126, b'S', b'N', b'A', b'P', b'P', b'Y', 0, 1, 1)
 _XERIAL_V1_FORMAT = 'bccccccBii'
@@ -149,10 +145,6 @@ def snappy_encode(payload, xerial_compatible=True, xerial_blocksize=32*1024):
         # buffer... likely a python-snappy bug, so just use a slice copy
         chunker = lambda payload, i, size: payload[i:size+i]
 
-    elif six.PY2:
-        # Sliced buffer avoids additional copies
-        # pylint: disable-msg=undefined-variable
-        chunker = lambda payload, i, size: buffer(payload, i, size)
     else:
         # snappy.compress does not like raw memoryviews, so we have to convert
         # tobytes, which is a copy... oh well. it's the thought that counts.
@@ -187,14 +179,21 @@ def _detect_xerial_stream(payload):
         The version is the version of this format as written by xerial,
         in the wild this is currently 1 as such we only support v1.
 
-        Compat is there to claim the miniumum supported version that
+        Compat is there to claim the minimum supported version that
         can read a xerial block stream, presently in the wild this is
         1.
     """
 
     if len(payload) > 16:
-        header = struct.unpack('!' + _XERIAL_V1_FORMAT, bytes(payload)[:16])
-        return header == _XERIAL_V1_HEADER
+        magic = struct.unpack('!' + _XERIAL_V1_FORMAT[:8], bytes(payload)[:8])
+        version, compat = struct.unpack('!' + _XERIAL_V1_FORMAT[8:], bytes(payload)[8:16])
+        # Until there is more than one way to do xerial blocking, the version + compat
+        # fields can be ignored. Also some producers (i.e., redpanda) are known to
+        # incorrectly encode these as little-endian, and that causes us to fail decoding
+        # when we otherwise would have succeeded.
+        # See https://github.com/dpkp/kafka-python/issues/2414
+        if magic == _XERIAL_V1_HEADER[:8]:
+            return True
     return False
 
 

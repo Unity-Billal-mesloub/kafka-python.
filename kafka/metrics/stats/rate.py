@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from kafka.metrics.measurable_stat import AbstractMeasurableStat
 from kafka.metrics.stats.sampled_stat import AbstractSampledStat
 
@@ -37,6 +35,8 @@ class Rate(AbstractMeasurableStat):
     occurrences (e.g. the count of values measured over the time interval)
     or other such values.
     """
+    __slots__ = ('_stat', '_unit')
+
     def __init__(self, time_unit=TimeUnit.SECONDS, sampled_stat=None):
         self._stat = sampled_stat or SampledTotal()
         self._unit = time_unit
@@ -105,6 +105,7 @@ class Rate(AbstractMeasurableStat):
 
 
 class SampledTotal(AbstractSampledStat):
+    __slots__ = ('_initial_value', '_samples', '_current')
     def __init__(self, initial_value=None):
         if initial_value is not None:
             raise ValueError('initial_value cannot be set on SampledTotal')

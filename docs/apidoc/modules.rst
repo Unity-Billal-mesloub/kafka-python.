@@ -2,6 +2,7 @@ kafka-python API
 ****************
 
 .. toctree::
+   :maxdepth: 1
 
    KafkaConsumer
    KafkaProducer
@@ -9,3 +10,5 @@ kafka-python API
    KafkaClient
    BrokerConnection
    ClusterMetadata
+   OffsetAndMetadata
+   TopicPartition

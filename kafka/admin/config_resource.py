@@ -1,11 +1,4 @@
-from __future__ import absolute_import
-
-# enum in stdlib as of py3.4
-try:
-    from enum import IntEnum  # pylint: disable=import-error
-except ImportError:
-    # vendored backport module
-    from kafka.vendor.enum34 import IntEnum
+from enum import IntEnum
 
 
 class ConfigResourceType(IntEnum):
@@ -34,3 +27,9 @@ class ConfigResource(object):
         self.resource_type = resource_type
         self.name = name
         self.configs = configs
+
+    def __str__(self):
+        return "ConfigResource %s=%s" % (self.resource_type, self.name)
+
+    def __repr__(self):
+        return "ConfigResource(%s, %s, %s)" % (self.resource_type, self.name, self.configs)

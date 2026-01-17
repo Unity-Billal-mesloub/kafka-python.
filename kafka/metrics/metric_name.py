@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import copy
 
 
@@ -38,6 +36,7 @@ class MetricName(object):
         # as messages are sent we record the sizes
         sensor.record(message_size)
     """
+    __slots__ = ('_name', '_group', '_description', '_tags', '_hash')
 
     def __init__(self, name, group, description=None, tags=None):
         """
@@ -93,7 +92,7 @@ class MetricName(object):
             return True
         if other is None:
             return False
-        return (type(self) == type(other) and
+        return (isinstance(self, type(other)) and
                 self.group == other.group and
                 self.name == other.name and
                 self.tags == other.tags)

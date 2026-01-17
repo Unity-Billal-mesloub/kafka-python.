@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from kafka.metrics import AnonMeasurable, NamedMeasurable
 from kafka.metrics.compound_stat import AbstractCompoundStat
 from kafka.metrics.stats import Histogram
@@ -13,6 +11,9 @@ class BucketSizing(object):
 
 class Percentiles(AbstractSampledStat, AbstractCompoundStat):
     """A compound stat that reports one or more percentiles"""
+    __slots__ = ('_initial_value', '_samples', '_current',
+                 '_percentiles', '_buckets', '_bin_scheme')
+
     def __init__(self, size_in_bytes, bucketing, max_val, min_val=0.0,
                  percentiles=None):
         super(Percentiles, self).__init__(0.0)
@@ -27,7 +28,7 @@ class Percentiles(AbstractSampledStat, AbstractCompoundStat):
                                  ' to be 0.0.')
             self.bin_scheme = Histogram.LinearBinScheme(self._buckets, max_val)
         else:
-            ValueError('Unknown bucket type: %s' % (bucketing,))
+            raise ValueError('Unknown bucket type: %s' % (bucketing,))
 
     def stats(self):
         measurables = []

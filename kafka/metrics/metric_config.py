@@ -1,10 +1,10 @@
-from __future__ import absolute_import
-
 import sys
 
 
 class MetricConfig(object):
     """Configuration values for metrics"""
+    __slots__ = ('quota', '_samples', 'event_window', 'time_window_ms', 'tags')
+
     def __init__(self, quota=None, samples=2, event_window=sys.maxsize,
                  time_window_ms=30 * 1000, tags=None):
         """
